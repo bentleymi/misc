@@ -1,0 +1,148 @@
+<form>
+  <label>Splunk Index Optimization</label>
+  <search id="base">
+    <query>$index$ $sourcetype$ $host$
+| head $eventCount$
+| eval initialLengthOfEvent = len(_raw)
+| eval modifiedEvent=_raw
+    </query>
+    <earliest>$time.earliest$</earliest>
+    <latest>$time.latest$</latest>
+  </search>
+  <fieldset submitButton="true" autoRun="false">
+    <input type="time" token="time">
+      <label></label>
+      <default>
+        <earliest>0</earliest>
+        <latest></latest>
+      </default>
+    </input>
+    <input type="multiselect" token="optimizations" searchWhenChanged="true">
+      <label>Optimization</label>
+      <choice value="| noop">None</choice>
+      <choice value="| rex field=modifiedEvent mode=sed &quot;s/\s\s+/ /g&quot; | rex field=modifiedEvent mode=sed &quot;s/^\s+//g&quot;">Remove Whitespace</choice>
+      <choice value="| eval modifiedEvent=&quot;You have enabled a test optimization&quot;">Test (Always True)</choice>
+      <default>| noop</default>
+      <initialValue>| noop</initialValue>
+      <delimiter> </delimiter>
+    </input>
+    <input type="text" token="eventCount" searchWhenChanged="true">
+      <label>Event Count (Sample Size)</label>
+      <default>10000</default>
+      <initialValue>10000</initialValue>
+    </input>
+    <input type="multiselect" token="index" searchWhenChanged="true">
+      <label>Index</label>
+      <fieldForLabel>index</fieldForLabel>
+      <fieldForValue>index</fieldForValue>
+      <search>
+        <query>| eventcount index=* OR index=_* summarize=false | dedup index</query>
+        <earliest>$time.earliest$</earliest>
+        <latest>$time.latest$</latest>
+      </search>
+      <choice value="*">All</choice>
+      <valuePrefix>index="</valuePrefix>
+      <valueSuffix>"</valueSuffix>
+      <delimiter> OR </delimiter>
+      <default>*</default>
+      <initialValue>*</initialValue>
+    </input>
+    <input type="multiselect" token="sourcetype" searchWhenChanged="true">
+      <label>Sourcetype</label>
+      <choice value="*">All</choice>
+      <default>*</default>
+      <initialValue>*</initialValue>
+      <fieldForLabel>sourcetype</fieldForLabel>
+      <fieldForValue>sourcetype</fieldForValue>
+      <search>
+        <query>| tstats c where $index$ by sourcetype | fields sourcetype</query>
+        <earliest>$time.earliest$</earliest>
+        <latest>$time.latest$</latest>
+      </search>
+      <valuePrefix>sourcetype="</valuePrefix>
+      <valueSuffix>"</valueSuffix>
+      <delimiter> OR </delimiter>
+    </input>
+    <input type="dropdown" token="host" searchWhenChanged="true">
+      <label>Host</label>
+      <choice value="*">All</choice>
+      <default>*</default>
+      <initialValue>*</initialValue>
+      <fieldForLabel>host</fieldForLabel>
+      <fieldForValue>host</fieldForValue>
+      <search>
+        <query>| tstats c where $index$  by host</query>
+        <earliest>$time.earliest$</earliest>
+        <latest>$time.latest$</latest>
+      </search>
+    </input>
+    <input type="dropdown" token="measurement" searchWhenChanged="true">
+      <label>Measurement</label>
+      <choice value="MB">MB</choice>
+      <choice value="GB">GB</choice>
+      <default>MB</default>
+      <initialValue>MB</initialValue>
+    </input>
+  </fieldset>
+  <row>
+    <panel>
+      <title>Estimated Total Saved with selected Event Count/Sample Size (in Bytes)</title>
+      <single>
+        <search base="base">
+          <query>$optimizations$
+| eval optimizedLengthOfEvent = len(modifiedEvent) 
+| eval bytesSaved=initialLengthOfEvent-optimizedLengthOfEvent 
+| stats sum(bytesSaved)</query>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="rangeColors">["0x53a051","0x0877a6","0xf8be34","0xf1813f","0xdc4e41"]</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="unit">B</option>
+      </single>
+    </panel>
+    <panel>
+      <title>Estimated Total Saved within selected Time Period (in $measurement$)</title>
+      <single>
+        <search>
+          <query>$index$ $sourcetype$ $host$
+| eval initialLengthOfEvent = len(_raw)
+| eval modifiedEvent=_raw
+$optimizations$
+| eval optimizedLengthOfEvent = len(modifiedEvent)
+| eval bytesSaved=initialLengthOfEvent-optimizedLengthOfEvent
+| stats avg(bytesSaved) as avgBytesSaved
+| appendcols [ | tstats count where $index$ $sourcetype$ $host$]
+| eval estimatedSavingsGB=(avgBytesSaved*count)/1024/1024/1024
+| eval estimatedSavingsMB=(avgBytesSaved*count)/1024/1024
+| eval estimatedSavings=if(match("$measurement$","MB"),estimatedSavingsMB,estimateSavingsGB)
+| fields estimatedSavings</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="numberPrecision">0.0000</option>
+        <option name="rangeColors">["0x53a051","0x0877a6","0xf8be34","0xf1813f","0xdc4e41"]</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="unit">$measurement$</option>
+      </single>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Before and After view of Sample Data</title>
+      <table>
+        <search base="base">
+          <query>$optimizations$
+| eval optimizedLengthOfEvent = len(modifiedEvent) 
+| eval bytesSaved=initialLengthOfEvent-optimizedLengthOfEvent 
+| table bytesSaved _raw modifiedEvent pid worker level useCaseName className _time host sourcetype index
+| rename _raw as originalEvent
+| sort 0 - bytesSaved</query>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </table>
+    </panel>
+  </row>
+</form>
+
