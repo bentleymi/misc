@@ -52,9 +52,6 @@ services:
       fi &&
       rm -f /var/run/nginx.pid &&
       exec nginx -g 'daemon off;' -c /etc/nginx/nginx.conf"
-    user: root
-    depends_on:
-      - workers
 networks:
   backbone:
     driver: bridge
