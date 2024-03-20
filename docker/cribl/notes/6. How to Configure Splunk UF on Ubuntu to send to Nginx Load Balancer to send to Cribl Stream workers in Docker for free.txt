@@ -1,0 +1,75 @@
+How to Configure Splunk® Enterprise Universal 
+Forwarder on Ubuntu to send to Cribl Stream 
+workers in Docker w/NGINX NLB for free!
+
+Step 1. Complete the following Prereq:
+
+How to Configure Cribl Stream on Ubuntu to 
+send to Nginx Load Balancer to send to 
+Cribl Stream workers in Docker for free :
+
+https://youtu.be/MfvHn4Wwjhc
+
+Step 2. Make sure the environment is running
+
+Using docker desktop or for CLI
+
+Windows:
+start -> run -> cmd
+
+docker ps
+
+Step 3. Forget about NGINX - The agent will use
+software load balancing with this integration
+
+Step 4. Log into your Cribl Leader and enable the
+in_splunk_tcp input for your worker group...
+
+Manage -> default (worker group) -> data 
+-> sources -> Splunk TCP
+
+Click on "Enabled" button next to in_splunk_tcp, 
+then click on in_splunk_tcp to open the 
+configuration settings
+
+Browse to advance settings, change max s2s version 
+to 4, and leave the rest as is and click save.
+
+Now commit and deploy...
+
+Step 5. Log into your ubuntu container
+
+Windows:
+start -> run -> cmd
+
+docker exec -it criblwithnginx-ubuntu-1 bash
+
+Step 6. Download and verify the UF image:
+
+curl -L -o splunkforwarder-9.2.0.1-d8ae995bf219-linux-2.6-amd64.deb "https://download.splunk.com/products/universalforwarder/releases/9.2.0.1/linux/splunkforwarder-9.2.0.1-d8ae995bf219-linux-2.6-amd64.deb"
+curl -L -o splunkforwarder-9.2.0.1-d8ae995bf219-linux-2.6-amd64.deb.md5 "https://download.splunk.com/products/universalforwarder/releases/9.2.0.1/linux/splunkforwarder-9.2.0.1-d8ae995bf219-linux-2.6-amd64.deb.md5"
+openssl md5 splunkforwarder-9.2.0.1-d8ae995bf219-linux-2.6-amd64.deb | diff -w splunkforwarder-9.2.0.1-d8ae995bf219-linux-2.6-amd64.deb.md5 -
+
+If no differences in the md5 hash, 
+then the download can be trusted.
+
+Step 7.  Install the UF:
+
+dpkg -i splunkforwarder-9.2.0.1-d8ae995bf219-linux-2.6-amd64.deb
+
+Step 8.  Add your cribl worker instances as 
+outputs for the UF & start it up.
+
+echo "[tcpout:cribl-stream]" > /opt/splunkforwarder/etc/system/local/outputs.conf
+echo "server=criblwithnginx-workers-1:9997,criblwithnginx-workers-2:9997" >> /opt/splunkforwarder/etc/system/local/outputs.conf
+
+/opt/splunkforwarder/bin/splunk start --accept-license --answer-yes
+
+create admin user/pass
+
+ps -ef | grep splunk
+
+Step 9. Verify data is flowing in Cribl using the 
+"Live" view of the in_splunk_tcp source.
+
+Step 10. Share this video and profit!
