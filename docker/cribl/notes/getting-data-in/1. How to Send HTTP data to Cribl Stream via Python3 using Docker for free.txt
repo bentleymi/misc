@@ -1,0 +1,78 @@
+How to Send HTTP data to Cribl Stream via Python3
+
+Step 0. Complete the following Prereq:
+1.  How to add Nginx in front of Cribl in Docker
+for free! :
+
+https://www.youtube.com/watch?v=krduLfIF96s
+
+Step 1: Know the difference between Cribl HTTP/s,
+Raw HTTP/s, and Splunk HEC
+
+
+Cribl HTTP/S:
+The Cribl HTTP Source receives data from a 
+Cribl HTTP Destination in the same 
+Distributed deployment
+
+ref:https://docs.cribl.io/stream/sources-cribl-http/
+
+RAW HTTP/S:
+The Raw HTTP Source listens on a specific port, 
+captures every HTTP request to that port, 
+and creates a corresponding event that it 
+pushes to its configured Event Breakers.
+
+ref:https://docs.cribl.io/stream/sources-raw-http/
+
+Splunk HEC:
+Its for Splunk agents to send data to,
+or if you previously configured splunk HEC endpoint
+in Splunk, you can replace it with one in Cribl
+Stream.
+
+Step 2:  Make sure docker is running and the
+previously created environment is up and running
+(from the prerequisite)
+
+2 methods here -> docker ps   OR   docker desktop
+
+Step 3.  Add the HTTP data source in Cribl Stream
+
+Manage -> Data -> Sources -> Raw HTTP -> Enable
+
+Commit -> Deploy
+
+Step 4.  Log into the ubuntu instance we created
+in the prerequisite (Step 0)
+
+docker exec -it criblwithnginx-ubuntu-1 bash
+
+Step 5. Download and install Python3 & Python-pip3
+
+apt update
+apt install python3 python3-pip -y
+
+Step 6. Using pip, install requests lib
+
+pip install requests
+
+Step 7. Open the "live" view of your new raw http
+input in Cribl Stream.  Set capture time to 300s or
+enough time for you to complete step 8.  (You can 
+always restart the capture)
+
+Step 8. Using python, import requests lib and post
+some data:
+
+python3 
+
+import requests
+url = "http://criblwithnginx-workers-1:10080"
+data = '{"test":"onlyAtest"}'
+requests.post(url,data=data,verify=False)
+
+Step 9.  PRofit!!!!
+
+Step 10.  Subscribe and Share -> Ring the bell!
+
