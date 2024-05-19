@@ -1,0 +1,80 @@
+function numberToWordsAndExpand(address) {
+  var units = ["Zero", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine"];
+  var abbreviations = {
+    'dr': 'Drive',
+    'st': 'Street',
+    'ave': 'Avenue',
+    'blvd': 'Boulevard',
+    'rd': 'Road',
+    'ln': 'Lane',
+    'ct': 'Court',
+    'pl': 'Place',
+    'sq': 'Square',
+    'hwy': 'Highway',
+    'pkwy': 'Parkway',
+    'trl': 'Trail',
+    'cir': 'Circle',
+    'way': 'Way',
+    'N': 'North',
+    'NE': 'North East',
+    'NW': 'North West',    
+    'SE': 'South East',
+    'SW': 'South West',
+    'S' : 'South',
+    'E' : 'East',
+    'W' : 'West',
+    'trce' : 'Trace',
+    'rdg' : 'Ridge',
+    'Apt':'Apartment',
+    'pt':'Point',
+    'ind':'Industrial',
+    'br':'Branch',
+    'grn':'Green',
+  };
+ 
+  function digitToWords(number) {
+    var numStr = number.toString();
+    var words = [];
+ 
+    for (var i = 0; i < numStr.length; i++) {
+      var digit = numStr[i];
+      if (!isNaN(digit)) {
+        words.push(units[parseInt(digit)]);
+      } else if (digit === '.') {
+        words.push("Point");
+      } else {
+        words.push(digit);
+      }
+    }
+ 
+    return words.join(" ");
+  }
+ 
+  function expandAbbreviations(text) {
+    var lowerText = text.toLowerCase();
+    var words = lowerText.split(' ');
+ 
+    for (var i = 0; i < words.length; i++) {
+      if (abbreviations[words[i]]) {
+        words[i] = abbreviations[words[i]];
+      }
+    }
+ 
+    var expandedText = words.join(' ');
+    expandedText = expandedText.replace(/\b\w/g, function(char) {
+      return char.toUpperCase();
+    });
+ 
+    return expandedText;
+  }
+ 
+  // First, convert numbers to words
+  var wordsAddress = address.replace(/\d+(\.\d+)?/g, function(match) {
+    return digitToWords(match);
+  });
+ 
+  // Then, expand abbreviations
+  var finalAddress = expandAbbreviations(wordsAddress);
+ 
+  return finalAddress;
+}
