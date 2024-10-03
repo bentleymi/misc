@@ -1,0 +1,285 @@
+<!--
+Requires the following data generator
+
+Data Generator - known_splunk_cloud_users.csv
+	Schedule: Every hour
+ 
+	| rest /services/authentication/users
+	| table realname email eai:acl.owner last_successful_login locked-out roles title type
+	| eval addedToLookupTime=now()
+	| search NOT [ | inputlookup known_splunk_cloud_users.csv | fields title | format ]
+	| outputlookup append=true known_splunk_cloud_users.csv
+	
+--!>
+
+<dashboard version="1.1" theme="light">
+<label>KO Access Audit</label>
+<row>
+<panel>
+<title>Dashboards Read Access</title>
+<table>
+<search>
+<query>
+            | inputlookup known_splunk_cloud_users.csv
+| makemv tokenizer="(\S+)" roles
+| mvexpand roles
+| rename roles AS role, title AS username
+| join role max=0 type=outer [
+	 | rest /services/authorization/roles
+	 | table title srchIndexesAllowed imported_srchIndexesAllowed
+	 | eval indexes=mvappend(srchIndexesAllowed,imported_srchIndexesAllowed)
+	 | eval indexes=if(match(indexes,"^\*" ),"*",indexes) 
+	 | fields title indexes
+	 | search indexes=*
+	 | rename title AS role
+	 | eval a=typeof(indexes)
+	 | dedup role indexes
+	 | search a=Multivalue
+	 | mvexpand indexes
+	 | append [
+	  | rest /services/authorization/roles
+	  | table title srchIndexesAllowed imported_srchIndexesAllowed
+	  | eval indexes=mvappend(srchIndexesAllowed,imported_srchIndexesAllowed)
+	  | eval indexes=if(match(indexes,"^\*"),"ALL",indexes)
+	  | fields title indexes
+	  | search indexes=*
+	  | rename title AS role
+	  | eval a=typeof(indexes)
+	  | dedup role indexes
+	  | search a=string
+	 ]
+	 | fields - a
+	 | sort 0 role
+	 ]
+| join role max=0 type=outer [
+| rest /services/data/ui/views
+| table title eai:acl.perms.read
+| rename eai:acl.perms.read AS role title as dashboard
+| fillnull value="None" role
+| mvexpand role
+]
+| append [
+| makeresults count=1
+| eval role="*"
+| join role max=0 type=outer [
+| rest /services/data/ui/views
+| table title eai:acl.perms.read
+| rename eai:acl.perms.read AS role title as dashboard
+| fillnull value="None" role
+]]
+| stats values(dashboard) as dashboards by username</query>
+<earliest>1727895600.000</earliest>
+<latest>1727984546.000</latest>
+<sampleRatio>1</sampleRatio>
+</search>
+<option name="count">100</option>
+<option name="dataOverlayMode">none</option>
+<option name="drilldown">none</option>
+<option name="percentagesRow">false</option>
+<option name="rowNumbers">false</option>
+<option name="totalsRow">false</option>
+<option name="wrap">true</option>
+</table>
+</panel>
+<panel>
+<title>Dashboards Write Access</title>
+<table>
+<search>
+<query>
+            | inputlookup known_splunk_cloud_users.csv
+| makemv tokenizer="(\S+)" roles
+| mvexpand roles
+| rename roles AS role, title AS username
+| join role max=0 type=outer [
+	 | rest /services/authorization/roles
+	 | table title srchIndexesAllowed imported_srchIndexesAllowed
+	 | eval indexes=mvappend(srchIndexesAllowed,imported_srchIndexesAllowed)
+	 | eval indexes=if(match(indexes,"^\*" ),"*",indexes) 
+	 | fields title indexes
+	 | search indexes=*
+	 | rename title AS role
+	 | eval a=typeof(indexes)
+	 | dedup role indexes
+	 | search a=Multivalue
+	 | mvexpand indexes
+	 | append [
+	  | rest /services/authorization/roles
+	  | table title srchIndexesAllowed imported_srchIndexesAllowed
+	  | eval indexes=mvappend(srchIndexesAllowed,imported_srchIndexesAllowed)
+	  | eval indexes=if(match(indexes,"^\*"),"ALL",indexes)
+	  | fields title indexes
+	  | search indexes=*
+	  | rename title AS role
+	  | eval a=typeof(indexes)
+	  | dedup role indexes
+	  | search a=string
+	 ]
+	 | fields - a
+	 | sort 0 role
+	 ]
+| join role max=0 type=outer [
+| rest /services/data/ui/views
+| table title eai:acl.perms.write
+| rename eai:acl.perms.write AS role title as dashboard
+| fillnull value="None" role
+| mvexpand role
+]
+| append [
+| makeresults count=1
+| eval role="*"
+| join role max=0 type=outer [
+| rest /services/data/ui/views
+| table title eai:acl.perms.write
+| rename eai:acl.perms.write AS role title as dashboard
+| fillnull value="None" role
+]]
+| stats values(dashboard) as dashboards by username</query>
+<earliest>1727895600.000</earliest>
+<latest>1727984546.000</latest>
+<sampleRatio>1</sampleRatio>
+</search>
+<option name="count">100</option>
+<option name="dataOverlayMode">none</option>
+<option name="drilldown">none</option>
+<option name="percentagesRow">false</option>
+<option name="rowNumbers">false</option>
+<option name="totalsRow">false</option>
+<option name="wrap">true</option>
+</table>
+</panel>
+</row>
+<row>
+<panel>
+<title>Saved Searches Read Access</title>
+<table>
+<search>
+<query>
+            | inputlookup known_splunk_cloud_users.csv
+| makemv tokenizer="(\S+)" roles
+| mvexpand roles
+| rename roles AS role, title AS username
+| join role max=0 type=outer [
+	 | rest /services/authorization/roles
+	 | table title srchIndexesAllowed imported_srchIndexesAllowed
+	 | eval indexes=mvappend(srchIndexesAllowed,imported_srchIndexesAllowed)
+	 | eval indexes=if(match(indexes,"^\*" ),"*",indexes) 
+	 | fields title indexes
+	 | search indexes=*
+	 | rename title AS role
+	 | eval a=typeof(indexes)
+	 | dedup role indexes
+	 | search a=Multivalue
+	 | mvexpand indexes
+	 | append [
+	  | rest /services/authorization/roles
+	  | table title srchIndexesAllowed imported_srchIndexesAllowed
+	  | eval indexes=mvappend(srchIndexesAllowed,imported_srchIndexesAllowed)
+	  | eval indexes=if(match(indexes,"^\*"),"ALL",indexes)
+	  | fields title indexes
+	  | search indexes=*
+	  | rename title AS role
+	  | eval a=typeof(indexes)
+	  | dedup role indexes
+	  | search a=string
+	 ]
+	 | fields - a
+	 | sort 0 role
+	 ]
+| join role max=0 type=outer [
+| rest /services/saved/searches
+| table title eai:acl.perms.read
+| rename eai:acl.perms.read AS role title as savedsearch
+| fillnull value="None" role
+| mvexpand role
+]
+| append [
+| makeresults count=1
+| eval role="*"
+| join role max=0 type=outer [
+| rest /services/saved/searches
+| table title eai:acl.perms.read
+| rename eai:acl.perms.read AS role title as savedsearch
+| fillnull value="None" role
+]]
+| stats values(savedsearch) as savedsearches by username</query>
+<earliest>1727895600.000</earliest>
+<latest>1727984546.000</latest>
+<sampleRatio>1</sampleRatio>
+</search>
+<option name="count">100</option>
+<option name="dataOverlayMode">none</option>
+<option name="drilldown">none</option>
+<option name="percentagesRow">false</option>
+<option name="rowNumbers">false</option>
+<option name="totalsRow">false</option>
+<option name="wrap">true</option>
+</table>
+</panel>
+<panel>
+<title>Saved Searches Write Access</title>
+<table>
+<search>
+<query>
+            | inputlookup known_splunk_cloud_users.csv
+| makemv tokenizer="(\S+)" roles
+| mvexpand roles
+| rename roles AS role, title AS username
+| join role max=0 type=outer [
+	 | rest /services/authorization/roles
+	 | table title srchIndexesAllowed imported_srchIndexesAllowed
+	 | eval indexes=mvappend(srchIndexesAllowed,imported_srchIndexesAllowed)
+	 | eval indexes=if(match(indexes,"^\*" ),"*",indexes) 
+	 | fields title indexes
+	 | search indexes=*
+	 | rename title AS role
+	 | eval a=typeof(indexes)
+	 | dedup role indexes
+	 | search a=Multivalue
+	 | mvexpand indexes
+	 | append [
+	  | rest /services/authorization/roles
+	  | table title srchIndexesAllowed imported_srchIndexesAllowed
+	  | eval indexes=mvappend(srchIndexesAllowed,imported_srchIndexesAllowed)
+	  | eval indexes=if(match(indexes,"^\*"),"ALL",indexes)
+	  | fields title indexes
+	  | search indexes=*
+	  | rename title AS role
+	  | eval a=typeof(indexes)
+	  | dedup role indexes
+	  | search a=string
+	 ]
+	 | fields - a
+	 | sort 0 role
+	 ]
+| join role max=0 type=outer [
+| rest /services/saved/searches
+| table title eai:acl.perms.write
+| rename eai:acl.perms.write AS role title as savedsearch
+| fillnull value="None" role
+| mvexpand role
+]
+| append [
+| makeresults count=1
+| eval role="*"
+| join role max=0 type=outer [
+| rest /services/saved/searches
+| table title eai:acl.perms.write
+| rename eai:acl.perms.write AS role title as savedsearch
+| fillnull value="None" role
+]]
+| stats values(savedsearch) as savedsearches by username</query>
+<earliest>1727895600.000</earliest>
+<latest>1727984546.000</latest>
+<sampleRatio>1</sampleRatio>
+</search>
+<option name="count">100</option>
+<option name="dataOverlayMode">none</option>
+<option name="drilldown">none</option>
+<option name="percentagesRow">false</option>
+<option name="rowNumbers">false</option>
+<option name="totalsRow">false</option>
+<option name="wrap">true</option>
+</table>
+</panel>
+</row>
+</dashboard>
