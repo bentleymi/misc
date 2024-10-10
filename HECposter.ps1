@@ -18,7 +18,7 @@ public class TrustAllCertsPolicy : ICertificatePolicy {
 $allProtocols = [System.Net.SecurityProtocolType]'Ssl3,Tls,Tls11,Tls12'
 [System.Net.ServicePointManager]::SecurityProtocol = $allProtocols
 
-$token = "1c2b5388-0100-4458-8777-29acef7d1d71"
+$token = "1c2b0000-0100-4458-8777-000000000000"
 $server = "localhost"
 $port = 8088
 $url = "https://${server}:$port/services/collector/event"
