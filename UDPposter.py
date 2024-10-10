@@ -1,3 +1,5 @@
+#usage:  Open a python shell with "python [enter]", update the server_address on line 6 below and then copy and paste into your python shell
+
 import socket
 
 # Define the server address and port
