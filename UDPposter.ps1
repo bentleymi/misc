@@ -17,3 +17,5 @@ function udpSend([string]$string) {
     }  
     catch { write-host $error }
 }
+
+udpSend("TEST STRING")
